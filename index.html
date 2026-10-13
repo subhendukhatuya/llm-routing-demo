@@ -1,373 +1,593 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLM Router | Maximize Accuracy, Minimize Cost</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Inter Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Chart.js for Cost-Accuracy Chart -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adaptive LLM Routing Demo | High Accuracy, Minimum Cost</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    code, pre {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+  </style>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen selection:bg-blue-600 selection:text-white">
+<body class="min-h-screen flex flex-col">
 
-    <!-- Navigation -->
-    <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-sm">
-                    <i data-lucide="Cpu" class="w-5 h-5"></i>
-                </div>
-                <span class="font-bold text-lg tracking-tight text-slate-900">LLM Router</span>
+  <!-- Navigation Bar -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-blue-600 rounded-lg text-white">
+          <i data-lucide="git-fork" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold text-slate-900 leading-tight">RouterAI</h1>
+          <p class="text-xs text-slate-500">Quality-Constrained Multi-LLM Routing</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-6 text-sm font-medium text-slate-600">
+        <a href="#models" class="hover:text-blue-600 transition">Candidate Models</a>
+        <a href="#calculator" class="hover:text-blue-600 transition">Cost Explorer</a>
+        <a href="#playground" class="hover:text-blue-600 transition">Live Demo</a>
+        <a href="#pareto" class="hover:text-blue-600 transition">Pareto Frontier</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+    <!-- Hero Section -->
+    <section class="text-center max-w-3xl mx-auto pt-4 pb-2">
+      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 mb-4">
+        <i data-lucide="zap" class="w-3.5 h-3.5 mr-1.5"></i> Up to 85% Cost Reduction at High Accuracy
+      </span>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+        Don't query GPT-4o for every simple prompt.
+      </h2>
+      <p class="mt-3 text-base sm:text-lg text-slate-600 leading-relaxed">
+        Intelligently route each user request to the optimal candidate model based on predicted task difficulty, quality constraints, and real-time cost constraints.
+      </p>
+    </section>
+
+    <!-- Model Matrix & Pricing Table -->
+    <section id="models" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b border-slate-100 gap-2">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900 flex items-center">
+            <i data-lucide="layers" class="w-5 h-5 mr-2 text-blue-600"></i> Candidate Model Pool & Token Pricing
+          </h3>
+          <p class="text-xs text-slate-500 mt-0.5">Real-world API cost comparison per 1M tokens</p>
+        </div>
+        <span class="text-xs font-mono bg-slate-100 text-slate-600 px-2.5 py-1 rounded border border-slate-200">
+          10 Active Candidate Models
+        </span>
+      </div>
+
+      <div class="overflow-x-auto custom-scrollbar">
+        <table class="w-full text-left text-xs sm:text-sm">
+          <thead>
+            <tr class="bg-slate-50 text-slate-600 border-y border-slate-200 font-semibold">
+              <th class="py-3 px-4">Model Name</th>
+              <th class="py-3 px-4">Provider</th>
+              <th class="py-3 px-4">Tier / Category</th>
+              <th class="py-3 px-4">Input / 1M Tokens</th>
+              <th class="py-3 px-4">Output / 1M Tokens</th>
+              <th class="py-3 px-4">Avg Accuracy Score</th>
+            </tr>
+          </thead>
+          <tbody id="models-table-body" class="divide-y divide-slate-100 text-slate-700 font-medium">
+            <!-- Dynamically populated via JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Monthly Cost Explorer Calculator -->
+    <section id="calculator" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-6 border-b border-slate-100 gap-2">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900 flex items-center">
+            <i data-lucide="calculator" class="w-5 h-5 mr-2 text-blue-600"></i> Monthly Cost & Savings Calculator
+          </h3>
+          <p class="text-xs text-slate-500 mt-0.5">Simulate system-wide financial savings with dynamic routing</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <!-- Controls -->
+        <div class="lg:col-span-6 space-y-6 bg-slate-50 p-5 rounded-lg border border-slate-200">
+          <div>
+            <div class="flex justify-between text-xs font-semibold text-slate-700 mb-2">
+              <label for="monthly-queries">Monthly API Requests</label>
+              <span id="queries-val" class="font-mono text-blue-600 font-bold">250,000 queries</span>
             </div>
-            <div class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-600">
-                <a href="#motivation" class="hover:text-blue-600 transition">Motivation</a>
-                <a href="#simulator" class="hover:text-blue-600 transition">Live Sandbox</a>
-                <a href="#pareto" class="hover:text-blue-600 transition">Cost vs Accuracy</a>
-                <a href="#deploy" class="hover:text-blue-600 transition">GitHub Setup</a>
+            <input type="range" id="monthly-queries" min="10000" max="2000000" step="10000" value="250000" class="w-full accent-blue-600 cursor-pointer">
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-semibold text-slate-700 mb-2">
+              <label for="avg-tokens">Avg Prompt Length (Input + Output Tokens)</label>
+              <span id="tokens-val" class="font-mono text-blue-600 font-bold">1,200 tokens</span>
             </div>
+            <input type="range" id="avg-tokens" min="200" max="4000" step="100" value="1200" class="w-full accent-blue-600 cursor-pointer">
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-semibold text-slate-700 mb-2">
+              <label for="routing-strategy">Routing Policy</label>
+              <span id="strategy-label" class="text-emerald-600 font-bold">Balanced (~98% Target Quality)</span>
+            </div>
+            <select id="routing-strategy" class="w-full text-xs sm:text-sm bg-white border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+              <option value="balanced">Balanced (98.2% Accuracy, High Cost Savings)</option>
+              <option value="max-savings">Aggressive Savings (94.5% Accuracy, Max Savings)</option>
+              <option value="high-accuracy">Quality Priority (99.5% Accuracy, Moderate Savings)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Output Metric Cards -->
+        <div class="lg:col-span-6 grid grid-cols-2 gap-4">
+          <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg text-center">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Static GPT-4o Cost</span>
+            <div id="cost-gpt4" class="text-xl sm:text-2xl font-extrabold text-slate-800 mt-2 font-mono">$1,875.00</div>
+            <span class="text-[10px] text-slate-400">/ month static</span>
+          </div>
+
+          <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg text-center">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Static Claude 3.5 Sonnet</span>
+            <div id="cost-sonnet" class="text-xl sm:text-2xl font-extrabold text-slate-800 mt-2 font-mono">$1,350.00</div>
+            <span class="text-[10px] text-slate-400">/ month static</span>
+          </div>
+
+          <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
+            <span class="text-xs font-bold text-blue-700 uppercase tracking-wider">Adaptive Router Cost</span>
+            <div id="cost-routed" class="text-xl sm:text-2xl font-extrabold text-blue-700 mt-2 font-mono">$312.50</div>
+            <span class="text-[10px] text-blue-500 font-medium">/ month optimized</span>
+          </div>
+
+          <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-center">
+            <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider">Monthly Savings</span>
+            <div id="savings-amount" class="text-xl sm:text-2xl font-extrabold text-emerald-600 mt-2 font-mono">$1,562.50</div>
+            <span id="savings-percent" class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full inline-block mt-1">83.3% Saved</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Playground Sandbox Section -->
+    <section id="playground" class="space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900 flex items-center">
+            <i data-lucide="play-circle" class="w-5 h-5 mr-2 text-blue-600"></i> Interactive Routing Sandbox
+          </h3>
+          <p class="text-xs text-slate-500">Select a real-world task or enter custom prompt to see live routing decision</p>
+        </div>
+      </div>
+
+      <!-- Presets bar -->
+      <div class="flex items-center space-x-2 overflow-x-auto pb-2 custom-scrollbar">
+        <span class="text-xs font-semibold text-slate-500 whitespace-nowrap">Examples:</span>
+        <button onclick="loadExample(0)" class="px-3 py-1.5 bg-white border border-slate-200 hover:border-blue-400 rounded-md text-xs font-medium text-slate-700 transition whitespace-nowrap shadow-sm">
+          🏷️ Simple Classification
+        </button>
+        <button onclick="loadExample(1)" class="px-3 py-1.5 bg-white border border-slate-200 hover:border-blue-400 rounded-md text-xs font-medium text-slate-700 transition whitespace-nowrap shadow-sm">
+          📊 Math / Financial Program-of-Thoughts
+        </button>
+        <button onclick="loadExample(2)" class="px-3 py-1.5 bg-white border border-slate-200 hover:border-blue-400 rounded-md text-xs font-medium text-slate-700 transition whitespace-nowrap shadow-sm">
+          💻 Refactor Rust Async Code
+        </button>
+        <button onclick="loadExample(3)" class="px-3 py-1.5 bg-white border border-slate-200 hover:border-blue-400 rounded-md text-xs font-medium text-slate-700 transition whitespace-nowrap shadow-sm">
+          🌐 Multilingual Bengali Translation
+        </button>
+        <button onclick="loadExample(4)" class="px-3 py-1.5 bg-white border border-slate-200 hover:border-blue-400 rounded-md text-xs font-medium text-slate-700 transition whitespace-nowrap shadow-sm">
+          📝 Structured JSON Extraction
+        </button>
+        <button onclick="loadExample(5)" class="px-3 py-1.5 bg-white border border-slate-200 hover:border-blue-400 rounded-md text-xs font-medium text-slate-700 transition whitespace-nowrap shadow-sm">
+          🧩 Deep Logical Reasoning
+        </button>
+      </div>
+
+      <!-- Main Interactive Box -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Input Form -->
+        <div class="lg:col-span-6 bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
+          <div class="space-y-4">
             <div>
-                <a href="#simulator" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm flex items-center space-x-2">
-                    <i data-lucide="play" class="w-4 h-4 fill-current"></i>
-                    <span>Try Sandbox</span>
-                </a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Header / Hero Section -->
-    <header class="py-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
-        <div class="inline-flex items-center space-x-2 bg-blue-50 border border-blue-200 px-3.5 py-1.5 rounded-full text-blue-700 text-xs font-semibold uppercase tracking-wider mb-6">
-            <i data-lucide="zap" class="w-3.5 h-3.5"></i>
-            <span>Inference Optimization Research</span>
-        </div>
-        <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight">
-            Intelligent LLM Routing: <br><span class="text-blue-600">High Accuracy, Fraction of the Cost</span>
-        </h1>
-        <p class="mt-6 text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto font-normal leading-relaxed">
-            Dynamically classify query complexity and dispatch prompts to the optimal model tier (Llama 3 8B, Claude 3.5 Haiku, GPT-4o). Cut inference expenditure by up to 75% without sacrificing response quality.
-        </p>
-
-        <div class="mt-10 flex flex-wrap justify-center gap-4">
-            <a href="#simulator" class="px-7 py-3.5 rounded-xl bg-blue-600 text-white font-medium shadow-sm hover:bg-blue-700 transition flex items-center space-x-2 text-sm">
-                <span>Test Live Simulator</span>
-                <i data-lucide="arrow-right" class="w-4 h-4"></i>
-            </a>
-            <a href="#pareto" class="px-7 py-3.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-medium transition flex items-center space-x-2 text-sm">
-                <i data-lucide="bar-chart-2" class="w-4 h-4 text-slate-500"></i>
-                <span>View Tradeoff Curve</span>
-            </a>
-        </div>
-    </header>
-
-    <!-- Motivating Examples Section -->
-    <section id="motivation" class="py-20 bg-white border-y border-slate-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-3xl mx-auto mb-16">
-                <h2 class="text-3xl font-bold tracking-tight text-slate-900">Why Static Routing Fails</h2>
-                <p class="mt-3 text-slate-600 text-base">
-                    Static deployment either overspends on trivial queries or breaks on complex reasoning. Intelligent routing bridges this gap.
-                </p>
+              <label for="prompt-input" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Input Prompt</label>
+              <textarea id="prompt-input" rows="7" class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg p-3 font-mono focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition" placeholder="Type or paste prompt..."></textarea>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-                <!-- Example 1 -->
-                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6 sm:p-8 flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between mb-4">
-                            <span class="bg-amber-100 text-amber-800 text-xs font-semibold px-3 py-1 rounded-full">Static Pitfall #1: Overpaying for Simple Queries</span>
-                            <span class="text-xs font-bold text-red-600 font-mono">15x Cost Waste</span>
-                        </div>
-                        <h3 class="text-lg font-bold text-slate-900 mb-2">Receipt Data Extraction</h3>
-                        <p class="text-sm text-slate-600 mb-6">Parsing structured JSON properties out of a straightforward invoice.</p>
-                        
-                        <div class="space-y-3 font-mono text-xs">
-                            <div class="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between">
-                                <span class="text-red-700 font-medium">GPT-4o Static Route</span>
-                                <span class="text-red-600 font-bold">$0.030 / 1k tokens</span>
-                            </div>
-                            <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between">
-                                <span class="text-emerald-700 font-medium">LLM Router (Llama-3-8B)</span>
-                                <span class="text-emerald-600 font-bold">$0.0005 / 1k tokens (99.2% Accuracy)</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Example 2 -->
-                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6 sm:p-8 flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between mb-4">
-                            <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">Static Pitfall #2: Underpowered Models</span>
-                            <span class="text-xs font-bold text-red-600 font-mono">High Failure Rate</span>
-                        </div>
-                        <h3 class="text-lg font-bold text-slate-900 mb-2">Multi-step Symbolic Reasoning</h3>
-                        <p class="text-sm text-slate-600 mb-6">Evaluating complex mathematical proofs and formal logic derivations.</p>
-                        
-                        <div class="space-y-3 font-mono text-xs">
-                            <div class="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between">
-                                <span class="text-red-700 font-medium">Small Model Static Route</span>
-                                <span class="text-red-600 font-bold">Hallucination / Error Risk</span>
-                            </div>
-                            <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between">
-                                <span class="text-blue-700 font-medium">LLM Router (Claude 3.5 Sonnet)</span>
-                                <span class="text-blue-600 font-bold">Guaranteed Correctness</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label for="complexity-score" class="block text-xs font-semibold text-slate-600 mb-1">Estimated Difficulty: <span id="diff-val" class="font-bold text-slate-900">0.32</span></label>
+                <input type="range" id="complexity-score" min="0.05" max="0.98" step="0.01" value="0.32" class="w-full accent-blue-600 cursor-pointer">
+              </div>
+              <div>
+                <label for="quality-threshold" class="block text-xs font-semibold text-slate-600 mb-1">Required Accuracy: <span id="qual-val" class="font-bold text-slate-900">95%</span></label>
+                <input type="range" id="quality-threshold" min="80" max="99" step="1" value="95" class="w-full accent-blue-600 cursor-pointer">
+              </div>
             </div>
+          </div>
+
+          <button id="route-btn" class="mt-6 w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-lg shadow transition flex items-center justify-center space-x-2">
+            <i data-lucide="cpu" class="w-4 h-4"></i>
+            <span>Execute Router Evaluation</span>
+          </button>
         </div>
+
+        <!-- Decision Output Panel -->
+        <div class="lg:col-span-6 bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Routing Decision & Execution Result</span>
+              <span id="route-status" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                Optimal Decision Found
+              </span>
+            </div>
+
+            <!-- Route Details Grid -->
+            <div class="mt-4 grid grid-cols-3 gap-3 text-center">
+              <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-100">
+                <span class="text-[10px] text-slate-400 font-semibold block uppercase">Selected Model</span>
+                <span id="selected-model-name" class="text-xs sm:text-sm font-bold text-blue-700 mt-1 block">Gemini 1.5 Flash</span>
+              </div>
+              <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-100">
+                <span class="text-[10px] text-slate-400 font-semibold block uppercase">Calculated Cost</span>
+                <span id="selected-model-cost" class="text-xs sm:text-sm font-bold text-emerald-600 mt-1 block font-mono">$0.0001</span>
+              </div>
+              <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-100">
+                <span class="text-[10px] text-slate-400 font-semibold block uppercase">Predicted Quality</span>
+                <span id="selected-model-qual" class="text-xs sm:text-sm font-bold text-slate-800 mt-1 block font-mono">96.2%</span>
+              </div>
+            </div>
+
+            <!-- Detailed Rationale Box -->
+            <div class="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <span class="text-xs font-bold text-slate-700 block mb-1">Router System Rationale:</span>
+              <p id="router-rationale" class="text-xs text-slate-600 leading-relaxed">
+                Task identified as low-complexity text categorization. High-tier models (GPT-4o, Claude 3.5) are over-qualified. Flash model fulfills accuracy requirements at a fraction of the cost.
+              </p>
+            </div>
+
+            <!-- Output Preview -->
+            <div class="mt-4">
+              <span class="text-xs font-bold text-slate-700 block mb-1">Sample Model Output Payload:</span>
+              <pre id="output-preview" class="text-xs bg-slate-900 text-emerald-400 p-3 rounded-lg overflow-x-auto max-h-36 custom-scrollbar leading-relaxed">{"category": "billing", "urgency": "medium", "confidence": 0.98}</pre>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>Savings vs GPT-4o: <strong id="query-saving-percent" class="text-emerald-600 font-bold">96.7% cheaper</strong></span>
+            <span>Latency: <strong id="query-latency" class="text-slate-700 font-mono">140ms</strong></span>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- Interactive LLM Router Simulator -->
-    <section id="simulator" class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center max-w-3xl mx-auto mb-16">
-            <h2 class="text-3xl font-bold tracking-tight text-slate-900">Interactive Router Sandbox</h2>
-            <p class="mt-3 text-slate-600 text-base">
-                Type any prompt or select a preset to see how the router calculates task complexity and assigns the optimal model.
-            </p>
+    <!-- Pareto Frontier Chart Section -->
+    <section id="pareto" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b border-slate-100 gap-2">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900 flex items-center">
+            <i data-lucide="trending-up" class="w-5 h-5 mr-2 text-blue-600"></i> Quality vs. Cost Pareto Frontier
+          </h3>
+          <p class="text-xs text-slate-500">Adaptive router achieves frontier performance superior to any single static LLM</p>
         </div>
+      </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-5xl mx-auto items-start">
-            <!-- Left Input -->
-            <div class="lg:col-span-6 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Prompt / Query Input</label>
-                <textarea id="promptInput" rows="5" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:border-blue-600 font-mono text-sm resize-none" placeholder="Enter prompt here...">Extract item names and total price from receipt: Order #991, 2x Coffee ($8.50)</textarea>
-
-                <div class="mt-4">
-                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">Quick Presets:</span>
-                    <div class="flex flex-wrap gap-2">
-                        <button onclick="loadPreset('Format this list of names into CSV format: John Doe, Jane Smith', 0.1)" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-300 transition">📋 Simple Formatting</button>
-                        <button onclick="loadPreset('Analyze this quarterly financial statement and calculate DCF valuation model with growth assumptions.', 0.8)" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-300 transition">📈 Complex Analysis</button>
-                    </div>
-                </div>
-
-                <button onclick="runSimulation()" class="mt-6 w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm transition flex items-center justify-center space-x-2 text-sm">
-                    <i data-lucide="zap" class="w-4 h-4"></i>
-                    <span>Run Router Decision</span>
-                </button>
-            </div>
-
-            <!-- Right Output / Decision Card -->
-            <div class="lg:col-span-6 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-base font-bold text-slate-900">Router Decision Output</h3>
-                    <span id="statusBadge" class="text-xs bg-emerald-100 text-emerald-800 font-medium px-2.5 py-1 rounded-full font-mono">Ready</span>
-                </div>
-
-                <div class="space-y-4">
-                    <!-- Complexity Meter -->
-                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                        <div class="flex items-center justify-between text-xs text-slate-600 mb-2">
-                            <span>Estimated Complexity Score</span>
-                            <span id="complexityText" class="font-mono font-bold text-blue-600">0.12 / 1.00 (Low)</span>
-                        </div>
-                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                            <div id="complexityBar" class="bg-blue-600 h-full w-[12%] transition-all duration-500"></div>
-                        </div>
-                    </div>
-
-                    <!-- Selected Model Card -->
-                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                        <div class="text-xs text-slate-500 mb-1">Selected Optimal Model</div>
-                        <div id="selectedModel" class="text-lg font-bold text-slate-900 font-mono">Llama-3-8B-Instruct</div>
-                        <div class="mt-2 flex items-center justify-between text-xs text-slate-600">
-                            <span>Latency: <strong id="estLatency" class="text-slate-900">110ms</strong></span>
-                            <span class="text-emerald-600 font-semibold">Match Accuracy: <strong id="estConfidence">99.5%</strong></span>
-                        </div>
-                    </div>
-
-                    <!-- Cost Comparison -->
-                    <div class="grid grid-cols-2 gap-3 font-mono text-xs">
-                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-                            <div class="text-slate-500 mb-1">GPT-4o Static Cost</div>
-                            <div id="standardCost" class="text-sm font-bold text-red-600">$0.0280</div>
-                        </div>
-                        <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
-                            <div class="text-emerald-700 mb-1">Router Optimized Cost</div>
-                            <div id="routerCost" class="text-sm font-bold text-emerald-700">$0.0003</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+      <div class="relative h-72 sm:h-96 w-full">
+        <canvas id="paretoChart"></canvas>
+      </div>
     </section>
 
-    <!-- Pareto Frontier Section -->
-    <section id="pareto" class="py-20 bg-white border-y border-slate-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-3xl mx-auto mb-16">
-                <h2 class="text-3xl font-bold tracking-tight text-slate-900">Cost-Accuracy Pareto Frontier</h2>
-                <p class="mt-3 text-slate-600 text-base">
-                    The router operates along the optimal frontier curve, achieving near-frontier accuracy at a fraction of standard cost.
-                </p>
-            </div>
+  </main>
 
-            <div class="max-w-3xl mx-auto bg-slate-50 border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
-                <div class="h-80 w-full relative">
-                    <canvas id="paretoChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </section>
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 mt-12 py-6">
+    <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500">
+      <p>Adaptive LLM Routing & Optimization Framework Demonstration.</p>
+    </div>
+  </footer>
 
-    <!-- GitHub Setup Instructions -->
-    <section id="deploy" class="py-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center max-w-3xl mx-auto mb-12">
-            <h2 class="text-3xl font-bold tracking-tight text-slate-900">Deploy on GitHub Pages</h2>
-            <p class="mt-3 text-slate-600 text-base">
-                Save this code as <code class="text-blue-600 bg-slate-100 px-2 py-0.5 rounded font-mono text-sm">index.html</code> and push it to your repository.
-            </p>
-        </div>
+  <!-- Script Logic -->
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
 
-        <div class="bg-slate-900 text-slate-100 rounded-2xl p-6 font-mono text-xs sm:text-sm overflow-x-auto shadow-sm">
-            <pre><code>git init
-git add index.html
-git commit -m "Initial commit for LLM Router demo"
-git branch -M main
-git remote add origin https://github.com/your-username/your-repo-name.git
-git push -u origin main
+    // Model Pool Dataset
+    const modelsPool = [
+      { name: "GPT-4o", provider: "OpenAI", tier: "Frontier / Heavy", inputCost: 2.50, outputCost: 10.00, avgAcc: 98.8, latency: 650 },
+      { name: "Claude 3.5 Sonnet", provider: "Anthropic", tier: "Frontier / Heavy", inputCost: 3.00, outputCost: 15.00, avgAcc: 98.5, latency: 580 },
+      { name: "DeepSeek R1", provider: "DeepSeek", tier: "Reasoning / Heavy", inputCost: 0.55, outputCost: 2.19, avgAcc: 97.9, latency: 1200 },
+      { name: "Gemini 1.5 Pro", provider: "Google", tier: "High Capacity", inputCost: 1.25, outputCost: 5.00, avgAcc: 96.5, latency: 520 },
+      { name: "DeepSeek V3", provider: "DeepSeek", tier: "Mid-Tier", inputCost: 0.14, outputCost: 0.28, avgAcc: 94.2, latency: 310 },
+      { name: "Llama 3.3 70B", provider: "Meta / Open", tier: "Mid-Tier Open", inputCost: 0.35, outputCost: 0.40, avgAcc: 93.8, latency: 280 },
+      { name: "GPT-4o-mini", provider: "OpenAI", tier: "Lightweight", inputCost: 0.15, outputCost: 0.60, avgAcc: 92.0, latency: 210 },
+      { name: "Claude 3.5 Haiku", provider: "Anthropic", tier: "Lightweight", inputCost: 0.80, outputCost: 4.00, avgAcc: 92.5, latency: 190 },
+      { name: "Gemini 1.5 Flash", provider: "Google", tier: "Ultra-Fast", inputCost: 0.075, outputCost: 0.30, avgAcc: 89.5, latency: 140 },
+      { name: "Mistral Small", provider: "Mistral AI", tier: "Ultra-Fast", inputCost: 0.10, outputCost: 0.30, avgAcc: 88.0, latency: 150 }
+    ];
 
-# Then enable GitHub Pages in your repository settings (Source: main branch / root)</code></pre>
-        </div>
-    </section>
+    // Motivating Examples
+    const examples = [
+      {
+        prompt: "Categorize the following customer email into one of [billing, tech_support, general]: 'Hello, I was charged twice for my subscription this month.'",
+        diff: 0.12,
+        reqQual: 88,
+        output: "{\n  \"category\": \"billing\",\n  \"confidence\": 0.992\n}"
+      },
+      {
+        prompt: "Solve via Program-of-Thoughts Python script: A company grew revenue by 14% year-over-year to $4.2M. Calculate previous year revenue and net margin if total operating costs were $3.1M.",
+        diff: 0.72,
+        reqQual: 96,
+        output: "def calculate_financials():\n    rev_2024 = 4200000\n    rev_2023 = rev_2024 / 1.14\n    costs = 3100000\n    margin = (rev_2024 - costs) / rev_2024\n    return {\"rev_2023\": round(rev_2023, 2), \"net_margin\": f\"{round(margin*100, 2)}%\"}\n\n# Output: {'rev_2023': 3684210.53, 'net_margin': '26.19%'}"
+      },
+      {
+        prompt: "Refactor this Rust code to handle concurrent async streams safely without blocking the tokio runtime thread pools.",
+        diff: 0.88,
+        reqQual: 98,
+        output: "use tokio::stream::StreamExt;\n\npub async fn process_concurrent_streams<S>(mut stream: S) \nwhere S: Stream<Item = Task> + Unpin + Send + 'static {\n    while let Some(task) = stream.next().await {\n        tokio::spawn(async move {\n            task.execute().await;\n        });\n    }\n}"
+      },
+      {
+        prompt: "Translate the following passage into natural, formal Bengali: 'Climate change presents an urgent threat to global biodiversity and agricultural sustainability.'",
+        diff: 0.45,
+        reqQual: 92,
+        output: "জলবায়ু পরিবর্তন বৈশ্বিক জীববৈচিত্র্য এবং কৃষি স্থায়িত্বের জন্য একটি জরুরি হুমকি উপস্থাপন করে।"
+      },
+      {
+        prompt: "Extract all key entities (Person, Org, Location, Amount) into a strict JSON schema from this raw press release snippet.",
+        diff: 0.28,
+        reqQual: 90,
+        output: "{\n  \"entities\": [\n    {\"name\": \"Acme Corp\", \"type\": \"Org\"},\n    {\"name\": \"Berlin\", \"type\": \"Location\"},\n    {\"amount\": \"$50M\", \"currency\": \"USD\"}\n  ]\n}"
+      },
+      {
+        prompt: "Analyze the formal security implications of zero-knowledge proofs (ZK-SNARKs vs ZK-STARKs) in multi-party state verification protocols.",
+        diff: 0.94,
+        reqQual: 98,
+        output: "ZK-STARKs eliminate the trusted setup dependency inherent in ZK-SNARKs by relying on collision-resistant hash functions, providing post-quantum security guarantees at the expense of larger proof sizes..."
+      }
+    ];
 
-    <!-- Footer -->
-    <footer class="bg-white border-t border-slate-200 py-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500">
-            LLM Router Demo © 2026. Open Source Research Sandbox.
-        </div>
-    </footer>
+    // Populate Models Table
+    const tableBody = document.getElementById("models-table-body");
+    modelsPool.forEach(m => {
+      const tr = document.createElement("tr");
+      tr.className = "hover:bg-slate-50/80 transition";
+      tr.innerHTML = `
+        <td class="py-3 px-4 font-bold text-slate-900">${m.name}</td>
+        <td class="py-3 px-4">${m.provider}</td>
+        <td class="py-3 px-4"><span class="px-2 py-0.5 text-[11px] rounded bg-slate-100 border border-slate-200 text-slate-600 font-semibold">${m.tier}</span></td>
+        <td class="py-3 px-4 font-mono">$${m.inputCost.toFixed(3)}</td>
+        <td class="py-3 px-4 font-mono">$${m.outputCost.toFixed(2)}</td>
+        <td class="py-3 px-4 font-mono font-bold text-blue-600">${m.avgAcc}%</td>
+      `;
+      tableBody.appendChild(tr);
+    });
 
-    <!-- JavaScript -->
-    <script>
-        lucide.createIcons();
+    // Cost Calculator Logic
+    const qSlider = document.getElementById("monthly-queries");
+    const tSlider = document.getElementById("avg-tokens");
+    const stratSelect = document.getElementById("routing-strategy");
 
-        function loadPreset(promptText, complexity) {
-            document.getElementById('promptInput').value = promptText;
-            runSimWithValues(promptText, complexity);
+    function updateCalculator() {
+      const qVal = parseInt(qSlider.value);
+      const tVal = parseInt(tSlider.value);
+      const strat = stratSelect.value;
+
+      document.getElementById("queries-val").innerText = qVal.toLocaleString() + " queries";
+      document.getElementById("tokens-val").innerText = tVal.toLocaleString() + " tokens";
+
+      // Input / Output split assumption: 60% input, 40% output
+      const inTokens = tVal * 0.60;
+      const outTokens = tVal * 0.40;
+
+      // GPT-4o Static Cost
+      const gpt4oInCost = (inTokens * 2.50) / 1000000;
+      const gpt4oOutCost = (outTokens * 10.00) / 1000000;
+      const totalGpt4o = (gpt4oInCost + gpt4oOutCost) * qVal;
+
+      // Claude Sonnet Static Cost
+      const sonnetInCost = (inTokens * 3.00) / 1000000;
+      const sonnetOutCost = (outTokens * 15.00) / 1000000;
+      const totalSonnet = (sonnetInCost + sonnetOutCost) * qVal;
+
+      // Routed Avg Cost Blend based on strategy
+      let avgBlendCostPerQuery = 0;
+      let labelText = "";
+
+      if (strat === "balanced") {
+        // 60% ultra-cheap, 25% mid-tier, 15% frontier
+        avgBlendCostPerQuery = (0.60 * ((inTokens*0.075 + outTokens*0.30)/1M)) + 
+                               (0.25 * ((inTokens*0.14 + outTokens*0.28)/1M)) + 
+                               (0.15 * ((inTokens*2.50 + outTokens*10.00)/1M));
+        labelText = "Balanced (~98% Target Quality)";
+      } else if (strat === "max-savings") {
+        // 80% ultra-cheap, 15% mid-tier, 5% frontier
+        avgBlendCostPerQuery = (0.80 * ((inTokens*0.075 + outTokens*0.30)/1M)) + 
+                               (0.15 * ((inTokens*0.14 + outTokens*0.28)/1M)) + 
+                               (0.05 * ((inTokens*2.50 + outTokens*10.00)/1M));
+        labelText = "Aggressive Savings (~94.5% Quality)";
+      } else {
+        // 30% ultra-cheap, 40% mid-tier, 30% frontier
+        avgBlendCostPerQuery = (0.30 * ((inTokens*0.075 + outTokens*0.30)/1M)) + 
+                               (0.40 * ((inTokens*0.35 + outTokens*0.40)/1M)) + 
+                               (0.30 * ((inTokens*2.50 + outTokens*10.00)/1M));
+        labelText = "Quality Priority (~99.5% Quality)";
+      }
+
+      const totalRouted = avgBlendCostPerQuery * qVal;
+      const savings = totalGpt4o - totalRouted;
+      const savingsPct = ((savings / totalGpt4o) * 100).toFixed(1);
+
+      document.getElementById("cost-gpt4").innerText = "$" + totalGpt4o.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById("cost-sonnet").innerText = "$" + totalSonnet.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById("cost-routed").innerText = "$" + totalRouted.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById("savings-amount").innerText = "$" + savings.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById("savings-percent").innerText = savingsPct + "% Saved";
+      document.getElementById("strategy-label").innerText = labelText;
+    }
+
+    // Auxiliary constant
+    const 1M = 1000000;
+
+    qSlider.addEventListener("input", updateCalculator);
+    tSlider.addEventListener("input", updateCalculator);
+    stratSelect.addEventListener("change", updateCalculator);
+    updateCalculator();
+
+    // Sandbox Interactive Logic
+    const diffSlider = document.getElementById("complexity-score");
+    const qualSlider = document.getElementById("quality-threshold");
+
+    diffSlider.addEventListener("input", () => {
+      document.getElementById("diff-val").innerText = diffSlider.value;
+      runRouting();
+    });
+
+    qualSlider.addEventListener("input", () => {
+      document.getElementById("qual-val").innerText = qualSlider.value + "%";
+      runRouting();
+    });
+
+    document.getElementById("route-btn").addEventListener("click", runRouting);
+
+    function loadExample(idx) {
+      const ex = examples[idx];
+      document.getElementById("prompt-input").value = ex.prompt;
+      diffSlider.value = ex.diff;
+      qualSlider.value = ex.reqQual;
+      document.getElementById("diff-val").innerText = ex.diff;
+      document.getElementById("qual-val").innerText = ex.reqQual + "%";
+      document.getElementById("output-preview").innerText = ex.output;
+      runRouting();
+    }
+
+    function runRouting() {
+      const diff = parseFloat(diffSlider.value);
+      const reqQual = parseFloat(qualSlider.value);
+
+      // Find lowest cost candidate model satisfying accuracy required
+      let chosen = modelsPool[modelsPool.length - 1]; // Default cheapest
+      
+      // Filter candidates that meet quality criteria given prompt difficulty
+      const eligible = modelsPool.filter(m => {
+        // Adjusted accuracy penalizing lower tier models on harder tasks
+        const effectiveAcc = m.avgAcc - (diff * (100 - m.avgAcc) * 0.4);
+        return effectiveAcc >= reqQual - 2;
+      });
+
+      if (eligible.length > 0) {
+        // Pick cheapest among eligible
+        eligible.sort((a, b) => (a.inputCost + a.outputCost) - (b.inputCost + b.outputCost));
+        chosen = eligible[0];
+      } else {
+        // Fallback to highest accuracy model
+        chosen = modelsPool[0];
+      }
+
+      // Calculate sample query cost assuming ~300 tokens
+      const sampleCost = ((200 * chosen.inputCost) + (100 * chosen.outputCost)) / 1000000;
+      const gpt4Cost = ((200 * 2.50) + (100 * 10.00)) / 1000000;
+      const savingPct = (((gpt4Cost - sampleCost) / gpt4Cost) * 100).toFixed(1);
+
+      document.getElementById("selected-model-name").innerText = chosen.name;
+      document.getElementById("selected-model-cost").innerText = "$" + sampleCost.toFixed(5);
+      document.getElementById("selected-model-qual").innerText = (chosen.avgAcc - (diff * 2)).toFixed(1) + "%";
+      document.getElementById("query-saving-percent").innerText = savingPct > 0 ? savingPct + "% cheaper" : "Baseline";
+      document.getElementById("query-latency").innerText = chosen.latency + "ms";
+
+      document.getElementById("router-rationale").innerText = 
+        `Difficulty score (${diff}) and target accuracy (${reqQual}%) evaluated. Candidate model [${chosen.name}] by ${chosen.provider} selected as the most cost-efficient choice meeting quality constraints.`;
+    }
+
+    // Load initial example
+    loadExample(0);
+
+    // Chart.js Pareto Frontier Initialization
+    const ctx = document.getElementById('paretoChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'scatter',
+      data: {
+        datasets: [
+          {
+            label: 'Individual Candidate LLMs',
+            data: modelsPool.map(m => ({ x: (m.inputCost + m.outputCost)/2, y: m.avgAcc, name: m.name })),
+            backgroundColor: '#94a3b8',
+            pointRadius: 6,
+            pointHoverRadius: 8
+          },
+          {
+            label: 'Adaptive Router Frontier',
+            data: [
+              { x: 0.18, y: 91.2 },
+              { x: 0.35, y: 95.8 },
+              { x: 0.75, y: 98.4 },
+              { x: 1.80, y: 99.1 }
+            ],
+            borderColor: '#2563eb',
+            backgroundColor: '#2563eb',
+            showLine: true,
+            borderDash: [4, 4],
+            pointRadius: 7,
+            pointStyle: 'rectRot'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                const pt = ctx.raw;
+                return (pt.name || ctx.dataset.label) + `: Avg Cost ~$${pt.x.toFixed(2)}/1M, Quality: ${pt.y}%`;
+              }
+            }
+          },
+          legend: {
+            position: 'bottom',
+            labels: { font: { family: 'Inter', size: 12 } }
+          }
+        },
+        scales: {
+          x: {
+            type: 'logarithmic',
+            title: { display: true, text: 'Average Cost per 1M Tokens ($ USD, Log Scale)', font: { size: 12, weight: 'bold' } },
+            grid: { color: '#f1f5f9' }
+          },
+          y: {
+            title: { display: true, text: 'Average Task Accuracy (%)', font: { size: 12, weight: 'bold' } },
+            min: 85,
+            max: 100,
+            grid: { color: '#f1f5f9' }
+          }
         }
-
-        function runSimulation() {
-            const prompt = document.getElementById('promptInput').value;
-            let complexity = Math.min(0.95, Math.max(0.08, (prompt.length / 250) + (prompt.includes('financial') || prompt.includes('Analyze') ? 0.6 : 0)));
-            runSimWithValues(prompt, complexity);
-        }
-
-        function runSimWithValues(prompt, complexity) {
-            const badge = document.getElementById('statusBadge');
-            badge.textContent = "Routing...";
-
-            setTimeout(() => {
-                const bar = document.getElementById('complexityBar');
-                const compText = document.getElementById('complexityText');
-                const modelEl = document.getElementById('selectedModel');
-                const latencyEl = document.getElementById('estLatency');
-                const confEl = document.getElementById('estConfidence');
-                const stdCostEl = document.getElementById('standardCost');
-                const routerCostEl = document.getElementById('routerCost');
-
-                bar.style.width = (complexity * 100) + '%';
-
-                if (complexity < 0.35) {
-                    compText.textContent = complexity.toFixed(2) + " / 1.00 (Low)";
-                    bar.className = "bg-emerald-600 h-full transition-all duration-500";
-                    modelEl.textContent = "Llama-3-8B-Instruct";
-                    latencyEl.textContent = "95ms";
-                    confEl.textContent = "99.4%";
-                    routerCostEl.textContent = "$0.0003";
-                } else if (complexity < 0.70) {
-                    compText.textContent = complexity.toFixed(2) + " / 1.00 (Moderate)";
-                    bar.className = "bg-blue-600 h-full transition-all duration-500";
-                    modelEl.textContent = "Claude 3.5 Haiku";
-                    latencyEl.textContent = "180ms";
-                    confEl.textContent = "99.1%";
-                    routerCostEl.textContent = "$0.0015";
-                } else {
-                    compText.textContent = complexity.toFixed(2) + " / 1.00 (High)";
-                    bar.className = "bg-indigo-600 h-full transition-all duration-500";
-                    modelEl.textContent = "GPT-4o / Claude 3.5 Sonnet";
-                    latencyEl.textContent = "650ms";
-                    confEl.textContent = "100%";
-                    routerCostEl.textContent = "$0.0250";
-                }
-
-                badge.textContent = "Optimized";
-            }, 250);
-        }
-
-        window.addEventListener('load', () => {
-            const ctx = document.getElementById('paretoChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'scatter',
-                data: {
-                    datasets: [
-                        {
-                            label: 'Frontier Models',
-                            data: [{x: 0.030, y: 99.6}],
-                            backgroundColor: '#ef4444',
-                            pointRadius: 8
-                        },
-                        {
-                            label: 'Small Open Source',
-                            data: [{x: 0.0005, y: 88.5}],
-                            backgroundColor: '#3b82f6',
-                            pointRadius: 8
-                        },
-                        {
-                            label: 'Smart Router Curve',
-                            data: [{x: 0.0008, y: 99.2}, {x: 0.0020, y: 99.4}, {x: 0.010, y: 99.5}, {x: 0.030, y: 99.6}],
-                            backgroundColor: '#2563eb',
-                            borderColor: '#2563eb',
-                            showLine: true,
-                            pointRadius: 6,
-                            tension: 0.3
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        x: {
-                            type: 'linear',
-                            title: { display: true, text: 'Cost per 1k Tokens ($)', color: '#64748b' },
-                            grid: { color: '#e2e8f0' },
-                            ticks: { color: '#64748b' }
-                        },
-                        y: {
-                            min: 80,
-                            max: 100,
-                            title: { display: true, text: 'Accuracy Score (%)', color: '#64748b' },
-                            grid: { color: '#e2e8f0' },
-                            ticks: { color: '#64748b' }
-                        }
-                    }
-                }
-            });
-        });
-    </script>
+      }
+    });
+  </script>
 </body>
 </html>
